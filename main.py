@@ -14,20 +14,20 @@ pb = Pushbullet(os.environ['pbk'])
 font_bold_directory = "Uni_Sans_Bold.otf"
 font_thin_directory = "Uni_Sans_Thin.otf"
 
-#parammetri controllo immagine
+#image control parameter
 do_enhance = True
 grey_scale = True
 
 contrast = 0.7 #1 is original image
 brightness = 0.6
 
-# trova ultimo articolo
+# find last article
 NewsFeed = feedparser.parse("https://thegroovecartel.com/feed/")
 entry = NewsFeed.entries[0]
-print("Le chiavi del feed sono: ")
+print("Feed Keys are: ")
 print(entry.keys())
 
-# scarica HTML pagina
+# get html
 page = requests.get(entry.link)
 extractedHtml = html.fromstring(page.content)
 
@@ -51,7 +51,7 @@ if not title:
         title = extractedHtml.xpath(title_list[i])
 
 string_title = title[0].text
-# estrai sottotitolo
+# subtitle extract
 
 sup_str = title_list[i]
 sup_str = sup_str[:-2] + 'p'
@@ -67,53 +67,53 @@ print("Il titolo dell'articolo è: ")
 print(string_title)
 print("Il sottotitolo dell'articolo è: ")
 print(string_subtitle)
-# estrai immagine post
+# extract image post
 print("Immagine del post")
 print(entry.media_content[0]['url'])
 post_image = entry.media_content[0]['url']
 
-if post_image.find(".jpg") == -1 and post_image.find(".jpeg") == -1:  # controllo se non è immagine
+if post_image.find(".jpg") == -1 and post_image.find(".jpeg") == -1:  # check if image
     post_image = entry.media_thumbnail[1]['url']
 
-# rimuovi parti stringa non necessarie
-post_image = post_image[38:post_image.find("?")]  # migliorare il codice aggiungendo tutte le possibilità di prefix
+# remove string not nedeed
+post_image = post_image[38:post_image.find("?")]  # todo check for every prefix
 post_image = "https://" + post_image
 
-# apro immagine dal web
+# load image from the web
 response = requests.get(post_image)
 image = Image.open(BytesIO(response.content))
 print("L'immagine originale è: ")
 print(image)
 
-# trovo dimensioni
+# find dimensions
 image_width = image.size[0]
 image_heigh = image.size[1]
 
 aspect_ratio = (1080, 1920)
 
-# image_heigh è 16
+# image_heigh is 16
 new_image_width = image_heigh / 16 * 9
 x_starting_point = (image_width - new_image_width) / 2
-# x di partenza, y di partenza, x di arrivo, y di arrivo
+# x start, y start, x end, y end
 box_to_crop = (x_starting_point, 0, new_image_width + x_starting_point, image_heigh)
 cropped_image = image.crop(box_to_crop)
 resized_image = ImageOps.fit(cropped_image, aspect_ratio)
 if grey_scale:
     resized_image = ImageOps.grayscale(resized_image)
-print("L'immagine tagliata è: ")
+print("Image cut is: ")
 print(cropped_image)
-print("L'immagine ridimensionata è: ")
+print("Image resized is: ")
 print(resized_image)
 
 if do_enhance:
-    # dimezza contrasto
+    # half contrast
     enhancer = ImageEnhance.Contrast(resized_image)
     resized_image = enhancer.enhance(contrast)
-    # dimezza luminosità
+    # half light
     enhancer = ImageEnhance.Brightness(resized_image)
     resized_image = enhancer.enhance(brightness)
 
-# effettivo oggetto disegno per scrivere testo su immagine originale
+# image object
 text_draw = ImageDraw.Draw(resized_image)
 
 title_param = text_processing.text_processing(string_title, font_bold_directory, 72)
